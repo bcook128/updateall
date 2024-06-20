@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# Validate sudo credentials
+sudo -v
+
+# Color codes for terminal output
+RED='\033[1;38;5;1m'
+GREEN='\033[1;38;5;2m'
+YELLOW='\033[1;38;5;3m'
+BLUE='\033[1;38;5;4m'
+RESET='\033[0m'
+
+# Update oh-my-posh
+echo -e "${GREEN}❱❱❱${YELLOW} UPDATING ${RED}OH-MY-POSH ${GREEN}❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰${RESET}"
+omp-update
+
+# Array of package managers
+pkgmgr=('apt' 'snap' 'flatpak' 'deb-get' 'pacman' 'zypper' 'dnf' 'yay' 'pipx')
+
+# Function to check if a package manager is installed
+check_package_manager() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Array to store the results of each package manager update
+results=()
+
+# Loop through each package manager
+for item in "${pkgmgr[@]}"; do
+    # Check if the package manager is installed
+    if check_package_manager "$item"; then
+#       echo -e "${GREEN}❱❱❱${YELLOW} UPDATING ${RED}$(echo ${item} | tr '[:lower:]' '[:upper:]') ${YELLOW}PACKAGES ${GREEN}❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰${RESET}"
+        printf "${GREEN}%-3s ${YELLOW}%-8s ${RED}%-7s ${GREEN}%s${RESET}\n" "❱❱❱" "UPDATING" "$(echo ${item} | tr '[:lower:]' '[:upper:]')" "❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰"
+        # Update package manager based on type
+        case "$item" in
+            "apt")
+                sudo apt update && sudo apt upgrade
+                ;;
+            "snap")
+                sudo snap refresh
+                ;;
+            "flatpak")
+                if [ -n "$SSH_CONNECTION" ]; then
+                    echo -e "${YELLOW}Skipping:${RED} $(echo ${item} | tr '[:lower:]' '[:upper:]')${RESET}: running through ssh"
+                    [[ -z "$SSH_CONNECTION" ]]
+                else
+                    flatpak update
+                fi
+                ;;
+            "deb-get")
+                deb-get update && deb-get upgrade
+                ;;
+            "pipx")
+                pipx upgrade-all
+                ;;
+            "pacman")
+                sudo pacman -Syu
+                ;;
+            "zypper")
+                sudo zypper refresh && sudo zypper update
+                ;;
+            "dnf")
+                sudo dnf check-update && sudo dnf upgrade
+                ;;
+            "yay")
+                yay -Syu
+                ;;
+            *)
+                echo "Unknown package manager: $item"
+                ;;
+        esac
+
+        # Check if the previous command succeeded
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN} ●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+            notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+            result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
+        else
+            echo -e "${RED} ●${RESET} Failed to update $(echo ${item} | tr '[:lower:]' '[:upper:]') packages"
+            notify-send --app-name="Package Update Results" --icon=emblem-unreadable "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages failed to update"
+            result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${RED}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "failed")
+        fi
+            results+=("$result_msg")
+    else
+        echo -e "${YELLOW}Skipping:${RED} $(echo ${item} | tr '[:lower:]' '[:upper:]')${RESET} is not installed."
+    fi
+
+done
+
+# Print summary results
+echo "+----------------------------------------+"
+echo "|         Package Update Summary         |"
+echo "+----------------------------------------+"
+#max_length=$(printf '%s\n' "${results[@]}" | awk '{print length}' | sort -nr | head -n1)
+for result in "${results[@]}"; do
+    echo "$result"
+done
