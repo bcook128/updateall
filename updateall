@@ -1,7 +1,19 @@
 #!/bin/bash
 
+# Set start time of script
+start_time=$(date +"%H:%M:%S")
+
 # Validate sudo credentials
 sudo -v
+
+# Declare logfile variables
+log_dir="$HOME/log/updateall"
+log_file="${log_dir}/updateall-$(date +"%Y%m%d-%H%M%S").log"
+
+# Check for log directory existance and create if it does not
+if [ ! -d "$log_dir" ]; then
+    mkdir -p "$log_dir"
+fi
 
 # Color codes for terminal output
 RED='\033[1;38;5;1m'
@@ -10,12 +22,28 @@ YELLOW='\033[1;38;5;3m'
 BLUE='\033[1;38;5;4m'
 RESET='\033[0m'
 
-# Update oh-my-posh
-echo -e "${GREEN}❱❱❱${YELLOW} UPDATING ${RED}OH-MY-POSH ${GREEN}❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰${RESET}"
-omp-update
+# Define log function
+log() {
+    echo -e "${YELLOW}$(date +"%Y-%m-%d %H:%M:%S")${RESET} $1" >> "$log_file"
+}
+
+# Define spacing function for formatting in logfile
+log_space() {
+    for i in {1..3}; do
+        echo "" >> "$log_file"
+    done
+}
+
+# Define spacing function for formatting in logfile
+log_line() {
+    echo "" >> "$log_file"
+}
+
+# Log beginning of script
+log "Updateall started"
 
 # Array of package managers
-pkgmgr=('apt' 'snap' 'flatpak' 'deb-get' 'pacman' 'zypper' 'dnf' 'yay' 'pipx')
+pkgmgr=('omposh' 'apt' 'snap' 'flatpak' 'deb-get' 'pipx' 'pacman' 'zypper' 'dnf' 'yay')
 
 # Function to check if a package manager is installed
 check_package_manager() {
@@ -27,43 +55,84 @@ results=()
 
 # Loop through each package manager
 for item in "${pkgmgr[@]}"; do
+item_formatted=$(echo -e ${BLUE}${item}${RESET})
+log_space
+log "STARTING UPDATE FOR: ${item}"
+log_line
+log "Checking for presence of package manager: ${item_formatted}."
+
     # Check if the package manager is installed
     if check_package_manager "$item"; then
-#       echo -e "${GREEN}❱❱❱${YELLOW} UPDATING ${RED}$(echo ${item} | tr '[:lower:]' '[:upper:]') ${YELLOW}PACKAGES ${GREEN}❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰${RESET}"
-        printf "${GREEN}%-3s ${YELLOW}%-8s ${RED}%-7s ${GREEN}%s${RESET}\n" "❱❱❱" "UPDATING" "$(echo ${item} | tr '[:lower:]' '[:upper:]')" "❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰"
+        log "Package manager ${item_formatted} found."
+        printf "${GREEN}%-3s ${YELLOW}%-8s ${RED}%7s ${GREEN}%s${RESET}\n" "❱❱❱" "UPDATING" "$(echo ${item} | tr '[:lower:]' '[:upper:]')" "❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰❰"
+
         # Update package manager based on type
         case "$item" in
             "apt")
-                sudo apt update && sudo apt upgrade
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                sudo apt-get update && sudo apt-get upgrade 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
                 ;;
             "snap")
-                sudo snap refresh
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                sudo snap refresh 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
                 ;;
             "flatpak")
                 if [ -n "$SSH_CONNECTION" ]; then
                     echo -e "${YELLOW}Skipping:${RED} $(echo ${item} | tr '[:lower:]' '[:upper:]')${RESET}: running through ssh"
+                    log "SSH connection detected; skipping ${item} package manager update."
                     [[ -z "$SSH_CONNECTION" ]]
                 else
-                    flatpak update
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    flatpak update 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
                 fi
                 ;;
             "deb-get")
-                deb-get update && deb-get upgrade
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                deb-get update && deb-get upgrade 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
                 ;;
             "pipx")
-                pipx upgrade-all
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                pipx upgrade-all 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
                 ;;
             "pacman")
-                sudo pacman -Syu
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                sudo pacman -Syu 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
                 ;;
             "zypper")
-                sudo zypper refresh && sudo zypper update
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                sudo zypper refresh && sudo zypper update 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
                 ;;
             "dnf")
-                sudo dnf check-update && sudo dnf upgrade
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                sudo dnf check-update && sudo dnf upgrade 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
                 ;;
             "yay")
-                yay -Syu
+                log "Running ${item_formatted} package manager update."
+                log "OUTPUT:"
+                yay -Syu 2>&1 | tee -a "$log_file"
+                log "Update for ${item_formatted} package manager complete."
+                ;;
+           "omposh")
+               log "Running ${item_formatted} update."
+               log "OUTPUT: (more detailed log in /omp-update.log"
+               omp-update 2>&1 | tee -a "$log_file"
+               log "Update for ${item_formatted} complete."
                 ;;
             *)
                 echo "Unknown package manager: $item"
@@ -75,23 +144,67 @@ for item in "${pkgmgr[@]}"; do
             echo -e "${GREEN} ●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
             notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
             result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
+            log "$result_msg"
         else
             echo -e "${RED} ●${RESET} Failed to update $(echo ${item} | tr '[:lower:]' '[:upper:]') packages"
             notify-send --app-name="Package Update Results" --icon=emblem-unreadable "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages failed to update"
             result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${RED}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "failed")
+            log "$result_msg"
         fi
             results+=("$result_msg")
     else
-        echo -e "${YELLOW}Skipping:${RED} $(echo ${item} | tr '[:lower:]' '[:upper:]')${RESET} is not installed."
+        skippedpackage=$(echo ${item} | tr '[:lower:]' '[:upper:]')
+        printf "${YELLOW}%-9s${RESET} ${RED}%-8s${RESET} %s\n" "Skipping: " "${skippedpackage}" " is not installed."
+        log "Skipping ${item} package manager update; ${item} not installed."
+        result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${YELLOW}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "skipped")
+#        results+=("$result_msg") # uncomment to enable skipping results in summary table
     fi
 
 done
 
+end_time=$(date +"%H:%M:%S")
+
+time_to_seconds() {
+    local time_str=$1
+    local hours=$(echo "$time_str" | cut -d: -f1)
+    local minutes=$(echo "$time_str" | cut -d: -f2)
+    local seconds=$(echo "$time_str" | cut -d: -f3)
+
+#    echo $((hours * 3600 + minutes * 60 + seconds))
+}
+
+start_seconds=$(time_to_seconds "$start_time")
+end_seconds=$(time_to_seconds "$end_time")
+
+seconds_diff=$((end_seconds - start_seconds))
+
+minutes_diff=$((seconds_diff / 60))
+echo ""
+echo ""
+formatted_stime=$(printf "%-15s ${YELLOW}%s${RESET}\n" "started at:" "${start_time}")
+formatted_etime=$(printf "%-15s ${GREEN}%s${RESET}\n" "completed at:" "${end_time}")
+echo "┌────────────────────────┐"
+echo "│    Script Run Time     │"
+echo "├────────────────────────┤"
+echo "│$formatted_stime│"
+echo "│$formatted_etime│"
+echo "└────────────────────────┘"
+if [[ "$minutes_diff" -lt 1 ]]; then
+    scrip_time="< 1"
+else
+    scrip_time=$minutes_diff
+fi
+echo "Summary results below:"
+echo ""
+
 # Print summary results
-echo "+----------------------------------------+"
-echo "|         Package Update Summary         |"
-echo "+----------------------------------------+"
-#max_length=$(printf '%s\n' "${results[@]}" | awk '{print length}' | sort -nr | head -n1)
+log_space
+echo "┌──────────────────────────────────────────┐" | tee -a "$log_file"
+echo "│          Package Update Summary          │" | tee -a "$log_file"
+echo "├──────────────────────────────────────────┤" | tee -a "$log_file"
 for result in "${results[@]}"; do
-    echo "$result"
+echo "│$result│" | tee -a "$log_file"
 done
+echo "└──────────────────────────────────────────┘" | tee -a "$log_file"
+
+log "Updateall complete"
