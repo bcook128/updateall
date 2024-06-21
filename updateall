@@ -166,11 +166,16 @@ end_time=$(date +"%H:%M:%S")
 
 time_to_seconds() {
     local time_str=$1
-    local hours=$(echo "$time_str" | cut -d: -f1)
-    local minutes=$(echo "$time_str" | cut -d: -f2)
-    local seconds=$(echo "$time_str" | cut -d: -f3)
+    local hours=${time_str%%:*}
+    local minutes=${time_str#*:}
+    minutes=${minutes%%:*}
+    local seconds=${time_str##*:}
 
-#    echo $((hours * 3600 + minutes * 60 + seconds))
+    hours=${hours#0}
+    minutes=${minutes#0}
+    seconds=${seconds#0}
+
+    echo $((hours * 3600 + minutes * 60 + seconds))
 }
 
 start_seconds=$(time_to_seconds "$start_time")
@@ -178,7 +183,7 @@ end_seconds=$(time_to_seconds "$end_time")
 
 seconds_diff=$((end_seconds - start_seconds))
 
-minutes_diff=$((seconds_diff / 60))
+#minutes_diff=$((seconds_diff / 60))
 echo ""
 echo ""
 formatted_stime=$(printf "%-15s ${YELLOW}%s${RESET}\n" "started at:" "${start_time}")
@@ -189,11 +194,14 @@ echo "├───────────────────────�
 echo "│$formatted_stime│"
 echo "│$formatted_etime│"
 echo "└────────────────────────┘"
-if [[ "$minutes_diff" -lt 1 ]]; then
-    scrip_time="< 1"
-else
-    scrip_time=$minutes_diff
-fi
+#if [[ "$minutes_diff" -lt 1 ]]; then
+#    script_time="< 1"
+#else
+#    script_time=$minutes_diff
+#fi
+echo ""
+echo "Script runtime: ${seconds_diff} seconds."
+echo ""
 echo "Summary results below:"
 echo ""
 
