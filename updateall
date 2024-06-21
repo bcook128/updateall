@@ -47,7 +47,11 @@ pkgmgr=('omposh' 'apt' 'snap' 'flatpak' 'deb-get' 'pipx' 'pacman' 'zypper' 'dnf'
 
 # Function to check if a package manager is installed
 check_package_manager() {
-    command -v "$1" >/dev/null 2>&1
+    if [ "$1" == omposh ]; then
+        command -v oh-my-posh >/dev/null 2>&1
+    else
+        command -v "$1" >/dev/null 2>&1
+    fi
 }
 
 # Array to store the results of each package manager update
@@ -183,7 +187,6 @@ end_seconds=$(time_to_seconds "$end_time")
 
 seconds_diff=$((end_seconds - start_seconds))
 
-#minutes_diff=$((seconds_diff / 60))
 echo ""
 echo ""
 formatted_stime=$(printf "%-15s ${YELLOW}%s${RESET}\n" "started at:" "${start_time}")
@@ -194,11 +197,6 @@ echo "├───────────────────────�
 echo "│$formatted_stime│"
 echo "│$formatted_etime│"
 echo "└────────────────────────┘"
-#if [[ "$minutes_diff" -lt 1 ]]; then
-#    script_time="< 1"
-#else
-#    script_time=$minutes_diff
-#fi
 echo ""
 echo "Script runtime: ${seconds_diff} seconds."
 echo ""
