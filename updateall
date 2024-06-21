@@ -39,6 +39,57 @@ log_line() {
     echo "" >> "$log_file"
 }
 
+# Function to update oh-my-posh
+updateomp() {
+    # Set function variables
+    currentVersion=$(oh-my-posh --version)
+    errorOutput=$(mktemp)
+    originLoc="https://ohmyposh.dev/install.sh"
+    destFile="$HOME/.local/bin"
+    message="\nTheme files have been reinstalled and custom themes added to themes folder.\nRun \e[1;38;5;10mompsel\e[0m for theme selection."
+
+    # Function to remove temporary files
+    cleanup() {
+        rm -f "$errorOutput"
+    }
+
+    # Enable exit on termination of script
+    trap cleanup EXIT
+
+    # Send info to user
+    echo "Checking updates for Oh My Posh."
+
+    # Retrieve installation script and run
+    log "Starting script download and execution."
+    curl -s "$originLoc" | bash -s -- -d "$destFile" > /dev/null 2> "$errorOutput"
+    log "Script download and execution complete."
+
+    # Error handling with output to user
+    if [[ $? -eq 0 ]]; then
+        newVersion="$(oh-my-posh --version)"
+        if [[ "$currentVersion" == "$newVersion" ]]; then
+            echo -e "Oh My Posh \e[1;38;5;10m${currentVersion}\033[0m is already up to date.${message}"
+            log "Version checked; ${currentVersion} is current version."
+        else
+            echo -e "Oh My Posh has been updated from \033[1;38;5;1m${currentVersion}\033[0m to \033[1;38;5;10m${newVersion}\033[0m.${message}"
+            log "Oh My Posh updated from ${currentVersion} to ${newVersion}."
+        fi
+    else
+        echo -e "\033[1;38;5;1mFailed\033[0m to update Oh My Posh:"
+        cat $errorOutput
+        log "Update failed: $(cat "$errorOutput")"
+    fi
+
+    # Copy custom themes into themes directory (gets overwritten with every update).
+    if [ -d "$HOME/.cache/oh-my-posh/custom_themes" ]; then
+        cp $HOME/.cache/oh-my-posh/custom_themes/* $HOME/.cache/oh-my-posh/themes/ && log "Custom themes added to themes folder."
+    else
+        echo "No custom themes detected."
+    fi
+}
+
+
+
 # Log beginning of script
 log "Updateall started"
 
@@ -92,7 +143,7 @@ log "Checking for presence of package manager: ${item_formatted}."
                 else
                     log "Running ${item_formatted} package manager update."
                     log "OUTPUT:"
-                    flatpak update 2>&1 | tee -a "$log_file"
+                    flatpak update -y 2>&1 | tee -a "$log_file"
                     log "Update for ${item_formatted} package manager complete."
                 fi
                 ;;
@@ -134,8 +185,8 @@ log "Checking for presence of package manager: ${item_formatted}."
                 ;;
            "omposh")
                log "Running ${item_formatted} update."
-               log "OUTPUT: (more detailed log in /omp-update.log"
-               omp-update 2>&1 | tee -a "$log_file"
+               log "OUTPUT:"
+               updateomp
                log "Update for ${item_formatted} complete."
                 ;;
             *)
@@ -146,12 +197,16 @@ log "Checking for presence of package manager: ${item_formatted}."
         # Check if the previous command succeeded
         if [ $? -eq 0 ]; then
             echo -e "${GREEN} ●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
-            notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+            if command -v notify-send >/dev/null 2>&1; then
+                notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+            fi
             result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
             log "$result_msg"
         else
             echo -e "${RED} ●${RESET} Failed to update $(echo ${item} | tr '[:lower:]' '[:upper:]') packages"
-            notify-send --app-name="Package Update Results" --icon=emblem-unreadable "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages failed to update"
+            if command -v notify-send >/dev/null 2>&1; then
+                notify-send --app-name="Package Update Results" --icon=emblem-unreadable "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages failed to update"
+            fi
             result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${RED}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "failed")
             log "$result_msg"
         fi
@@ -188,17 +243,17 @@ end_seconds=$(time_to_seconds "$end_time")
 seconds_diff=$((end_seconds - start_seconds))
 
 echo ""
-echo ""
+# echo ""
 formatted_stime=$(printf "%-15s ${YELLOW}%s${RESET}\n" "started at:" "${start_time}")
 formatted_etime=$(printf "%-15s ${GREEN}%s${RESET}\n" "completed at:" "${end_time}")
-echo "┌────────────────────────┐"
-echo "│    Script Run Time     │"
-echo "├────────────────────────┤"
-echo "│$formatted_stime│"
-echo "│$formatted_etime│"
-echo "└────────────────────────┘"
-echo ""
-echo "Script runtime: ${seconds_diff} seconds."
+# echo "┌────────────────────────┐"
+# echo "│    Script Run Time     │"
+# echo "├────────────────────────┤"
+# echo "│$formatted_stime│"
+# echo "│$formatted_etime│"
+# echo "└────────────────────────┘"
+# echo ""
+echo -e "Script runtime: ${YELLOW}${seconds_diff}${RESET} seconds."
 echo ""
 echo "Summary results below:"
 echo ""
