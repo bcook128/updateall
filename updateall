@@ -3,6 +3,37 @@
 # Set start time of script
 start_time=$(date +"%H:%M:%S")
 
+# Declare opts variable
+skips=()
+
+# Function for opt arguments passed with command
+containsElement() {
+    local element match="$1"
+    shift
+    for element; do [[ "$element" == "$match" ]] && return 0; done
+    return 1
+}
+
+# Process options
+while getopts "s:" opt; do
+    case $opt in
+        s)
+            skips+=("$OPTARG")
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Shift the processed options away
+shift $((OPTIND-1))
+
 # Validate sudo credentials
 sudo -v
 
@@ -84,8 +115,10 @@ updateomp() {
     if [ -d "$HOME/.cache/oh-my-posh/custom_themes" ]; then
         cp $HOME/.cache/oh-my-posh/custom_themes/* $HOME/.cache/oh-my-posh/themes/ && log "Custom themes added to themes folder."
     else
-        echo "No custom themes detected."
+        echo "No custom themes detected. Create custom themes and add to\n $HOME/.cache/oh-my-posh/custom_themes to include in ompsel themes list."
     fi
+
+   rm -rf $HOME/.cache/oh-my-posh/themes/*.bak
 }
 
 
@@ -124,70 +157,120 @@ log "Checking for presence of package manager: ${item_formatted}."
         # Update package manager based on type
         case "$item" in
             "apt")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                sudo apt-get update && sudo apt-get upgrade 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
-                ;;
-            "snap")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                sudo snap refresh 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
-                ;;
-            "flatpak")
-                if [ -n "$SSH_CONNECTION" ]; then
-                    echo -e "${YELLOW}Skipping:${RED} $(echo ${item} | tr '[:lower:]' '[:upper:]')${RESET}: running through ssh"
-                    log "SSH connection detected; skipping ${item} package manager update."
-                    [[ -z "$SSH_CONNECTION" ]]
+                if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
                 else
                     log "Running ${item_formatted} package manager update."
                     log "OUTPUT:"
-                    flatpak update -y 2>&1 | tee -a "$log_file"
+                    sudo apt-get update && sudo apt-get upgrade 2>&1 | tee -a "$log_file"
                     log "Update for ${item_formatted} package manager complete."
                 fi
                 ;;
+            "snap")
+                 if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    sudo snap refresh 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                fi
+                ;;
+            "flatpak")
+                if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    if [ -n "$SSH_CONNECTION" ]; then
+                        echo -e "${YELLOW}Skipping:${RED} $(echo ${item} | tr '[:lower:]' '[:upper:]')${RESET}: running through ssh"
+                        log "SSH connection detected; skipping ${item} package manager update."
+                        [[ -z "$SSH_CONNECTION" ]]
+                    else
+                        log "Running ${item_formatted} package manager update."
+                        log "OUTPUT:"
+                        flatpak update -y 2>&1 | tee -a "$log_file"
+                        log "Update for ${item_formatted} package manager complete."
+                    fi
+                fi
+                ;;
             "deb-get")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                deb-get update && deb-get upgrade 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
+                 if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    deb-get update && deb-get upgrade 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                fi
                 ;;
             "pipx")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                pipx upgrade-all 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
+                 if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    pipx upgrade-all 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                fi
                 ;;
             "pacman")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                sudo pacman -Syu 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
+                 if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    sudo pacman -Syu 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                fi
                 ;;
             "zypper")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                sudo zypper refresh && sudo zypper update 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
+                 if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    sudo zypper refresh && sudo zypper update 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                fi
                 ;;
             "dnf")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                sudo dnf check-update && sudo dnf upgrade 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
+                 if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    sudo dnf check-update && sudo dnf upgrade 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                fi
                 ;;
             "yay")
-                log "Running ${item_formatted} package manager update."
-                log "OUTPUT:"
-                yay -Syu 2>&1 | tee -a "$log_file"
-                log "Update for ${item_formatted} package manager complete."
+                 if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    yay -Syu 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                fi
                 ;;
            "omposh")
-               log "Running ${item_formatted} update."
-               log "OUTPUT:"
-               updateomp
-               log "Update for ${item_formatted} complete."
+                if containsElement "$item" "${skips[@]}"; then
+                    echo "Skip flag detected:"
+                    log "Skipping update for ${item} per user command argument."
+                else
+                    log "Running ${item_formatted} update."
+                    log "OUTPUT:"
+                    updateomp
+                    log "Update for ${item_formatted} complete."
+                fi
                 ;;
             *)
                 echo "Unknown package manager: $item"
@@ -196,11 +279,16 @@ log "Checking for presence of package manager: ${item_formatted}."
 
         # Check if the previous command succeeded
         if [ $? -eq 0 ]; then
-            echo -e "${GREEN} ●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
-            if command -v notify-send >/dev/null 2>&1; then
-                notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+            if containsElement "$item" "${skips[@]}"; then
+                echo -e "${YELLOW}●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages skipped per user input"
+                result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${YELLOW}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "user-skip")
+            else
+                echo -e "${GREEN} ●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+                if command -v notify-send >/dev/null 2>&1; then
+                    notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+                fi
+                result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
             fi
-            result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
             log "$result_msg"
         else
             echo -e "${RED} ●${RESET} Failed to update $(echo ${item} | tr '[:lower:]' '[:upper:]') packages"
