@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Define script version
+SCRIPT_VERSION="1.7"
+
+# Function for displaying script version
+show_version() {
+    echo "updateall version ${SCRIPT_VERSION}"
+    exit 0
+}
+
 # Set start time of script
 start_time=$(date +"%H:%M:%S")
 
@@ -14,11 +23,41 @@ containsElement() {
     return 1
 }
 
+# Function to show script show_usage
+show_usage() {
+    echo "Usage: $(basename $0) [-s <package-manager>] [-v|--version] [-h|--help]"
+    echo "Options:"
+    echo "  -s <package_manager>    Skip updating the specified package manager (omposh apt snap flatpak deb-get pipx pacman yay dnf zypper)"
+    echo "  -v, --version           Show script version"
+    echo "  -h, --help              Show this usage information"
+    exit 1
+}
+
 # Process options
-while getopts "s:" opt; do
+while getopts ":s:vh-:" opt; do
     case $opt in
         s)
             skips+=("$OPTARG")
+            ;;
+        v | -v | --version)
+            show_version
+            ;;
+        h | -h | --help)
+            show_usage
+            ;;
+        -)
+            case "${OPTARG}" in
+                version)
+                    show_version
+                    ;;
+                help)
+                    show_usage
+                    ;;
+                *)
+                    echo "Invalid option: --$OPTARG" >&2
+                    exit 1
+                    ;;
+            esac
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -77,7 +116,7 @@ updateomp() {
     errorOutput=$(mktemp)
     originLoc="https://ohmyposh.dev/install.sh"
     destFile="$HOME/.local/bin"
-    message="\nTheme files have been reinstalled and custom themes added to themes folder.\nRun \e[1;38;5;10mompsel\e[0m for theme selection."
+    message='\nTheme files have been reinstalled and custom themes added to themes folder.\nRun \e[1;38;5;10mompsel\e[0m for theme selection.'
 
     # Function to remove temporary files
     cleanup() {
@@ -115,7 +154,8 @@ updateomp() {
     if [ -d "$HOME/.cache/oh-my-posh/custom_themes" ]; then
         cp $HOME/.cache/oh-my-posh/custom_themes/* $HOME/.cache/oh-my-posh/themes/ && log "Custom themes added to themes folder."
     else
-        echo "No custom themes detected. Create custom themes and add to\n $HOME/.cache/oh-my-posh/custom_themes to include in ompsel themes list."
+        echo "No custom themes detected. Create custom themes and add to"
+        echo "$HOME/.cache/oh-my-posh/custom_themes to include in ompsel themes list."
     fi
 
    rm -rf $HOME/.cache/oh-my-posh/themes/*.bak
@@ -239,7 +279,7 @@ log "Checking for presence of package manager: ${item_formatted}."
             else
                 echo -e "${GREEN} ●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
                 if command -v notify-send >/dev/null 2>&1; then
-                    notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
+                    notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully" 2>/dev/null
                 fi
                 result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
             fi
@@ -247,7 +287,7 @@ log "Checking for presence of package manager: ${item_formatted}."
         else
             echo -e "${RED} ●${RESET} Failed to update $(echo ${item} | tr '[:lower:]' '[:upper:]') packages"
             if command -v notify-send >/dev/null 2>&1; then
-                notify-send --app-name="Package Update Results" --icon=emblem-unreadable "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages failed to update"
+                notify-send --app-name="Package Update Results" --icon=emblem-unreadable "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages failed to update" 2>/dev/null
             fi
             result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${RED}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "failed")
             log "$result_msg"
