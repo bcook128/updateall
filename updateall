@@ -36,7 +36,7 @@ show_usage() {
 }
 
 # Process options
-while getopts ":s:vh-:" opt; do
+while getopts ":s:lvh-:" opt; do
     case $opt in
         s)
             skips+=("$OPTARG")
