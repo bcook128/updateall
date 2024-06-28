@@ -19,12 +19,12 @@ install_script() {
     sudo chmod +x "$script_path/$(basename "$script_file")"
 }
 
-if [[ "$(id -u" -ne 0 ]]; then
+if [[ "$(id -u)" -ne 0 ]]; then
     echo "Please run script as root or using sudo."
     exit 1
 fi
 
-install manpage "./updateall.gz"
+install_manpage "./updateall.1.gz"
 
 install_script "./updateall"
 
