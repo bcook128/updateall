@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo -v
+
 # Declare variables for paths
 manpage_path="/usr/share/man/man1"
 script_path="/usr/local/bin"
