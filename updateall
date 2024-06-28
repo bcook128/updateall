@@ -41,7 +41,7 @@ while getopts ":s:vh-:" opt; do
         s)
             skips+=("$OPTARG")
             ;;
-        - | -l | --logs)
+        l | -l | --logs)
             view_logs=true
             ;;
         v | -v | --version)
