@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Sudo authentication
 sudo -v
 
 # Declare variables for paths
