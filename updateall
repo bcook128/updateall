@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Define script version
-SCRIPT_VERSION="1.7"
+SCRIPT_VERSION="1.8"
+
+# Declare logfile variables
+log_dir="$HOME/log/updateall"
+log_file="${log_dir}/updateall-$(date +"%Y%m%d-%H%M%S").log"
 
 # Function for displaying script version
 show_version() {
@@ -100,10 +104,6 @@ fi
 
 # Validate sudo credentials
 sudo -v
-
-# Declare logfile variables
-log_dir="$HOME/log/updateall"
-log_file="${log_dir}/updateall-$(date +"%Y%m%d-%H%M%S").log"
 
 # Check for log directory existance and create if it does not
 if [ ! -d "$log_dir" ]; then
