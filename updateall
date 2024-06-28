@@ -90,7 +90,7 @@ view_log_file() {
     latest_log=$(ls -lt "$log_dir" | head -n 1 | awk '{print $NF}')
     if [ -n "$latest_log" ]; then
         echo "Displaying most recent log file: $latest_log"
-        cat "$log_dir/latest_log"
+        cat "$log_dir/$latest_log"
     else
         echo "No log files found in $log_dir"
     fi
