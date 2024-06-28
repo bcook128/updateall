@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Define script version
-SCRIPT_VERSION="1.7"
+SCRIPT_VERSION="1.8"
+
+# Declare logfile variables
+log_dir="$HOME/log/updateall"
+log_file="${log_dir}/updateall-$(date +"%Y%m%d-%H%M%S").log"
 
 # Function for displaying script version
 show_version() {
@@ -14,6 +18,7 @@ start_time=$(date +"%H:%M:%S")
 
 # Declare opts variable
 skips=()
+view_logs=false
 
 # Function for opt arguments passed with command
 containsElement() {
@@ -28,16 +33,20 @@ show_usage() {
     echo "Usage: $(basename $0) [-s <package-manager>] [-v|--version] [-h|--help]"
     echo "Options:"
     echo "  -s <package_manager>    Skip updating the specified package manager (omposh apt snap flatpak deb-get pipx pacman yay dnf zypper)"
+    echo "  -l, --logs              Display last updateall log"
     echo "  -v, --version           Show script version"
     echo "  -h, --help              Show this usage information"
     exit 1
 }
 
 # Process options
-while getopts ":s:vh-:" opt; do
+while getopts ":s:lvh-:" opt; do
     case $opt in
         s)
             skips+=("$OPTARG")
+            ;;
+        l | -l | --logs)
+            view_logs=true
             ;;
         v | -v | --version)
             show_version
@@ -47,6 +56,9 @@ while getopts ":s:vh-:" opt; do
             ;;
         -)
             case "${OPTARG}" in
+                logs)
+                    view_logs=true
+                    ;;
                 version)
                     show_version
                     ;;
@@ -73,12 +85,25 @@ done
 # Shift the processed options away
 shift $((OPTIND-1))
 
+# Function to diplay most recent log file content
+view_log_file() {
+    latest_log=$(ls -1t "$log_dir" | head -n 1 | awk '{print $NF}')
+    if [ -n "$latest_log" ]; then
+        echo "Displaying most recent log file: $latest_log"
+        cat "$log_dir/$latest_log"
+    else
+        echo "No log files found in $log_dir"
+    fi
+}
+
+# Display logs if option set
+if [ "$view_logs" = true ]; then
+    view_log_file
+    exit 0
+fi
+
 # Validate sudo credentials
 sudo -v
-
-# Declare logfile variables
-log_dir="$HOME/log/updateall"
-log_file="${log_dir}/updateall-$(date +"%Y%m%d-%H%M%S").log"
 
 # Check for log directory existance and create if it does not
 if [ ! -d "$log_dir" ]; then

@@ -31,9 +31,11 @@ updateall [-s <package_manager>] [--version] [--help]
 
 ## Version
 
-updateall 1.7
+updateall 1.8
 
 ## History
+
+Version 1.8: Added option to view most recent updateall log file.
 
 Version 1.7: Updated support for oh-my-posh and added options for skipping package managers.
 
