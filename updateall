@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define script version
-SCRIPT_VERSION="1.8"
+SCRIPT_VERSION="1.8.0"
 
 # Declare logfile variables
 log_dir="$HOME/log/updateall"
