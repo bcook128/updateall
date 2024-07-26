@@ -13,7 +13,7 @@ show_version() {
     exit 0
 }
 
-# Set start time of script
+# Set start time of script for timer.
 start_time=$(date +"%H:%M:%S")
 
 # Declare opts variable
