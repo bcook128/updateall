@@ -13,7 +13,7 @@ show_version() {
     exit 0
 }
 
-# Set start time of script for timer.
+# Set start time of script
 start_time=$(date +"%H:%M:%S")
 
 # Declare opts variable
@@ -32,7 +32,7 @@ containsElement() {
 show_usage() {
     echo "Usage: $(basename $0) [-s <package-manager>] [-v|--version] [-h|--help]"
     echo "Options:"
-    echo "  -s <package_manager>    Skip updating the specified package manager (omposh apt snap flatpak deb-get pipx pacman yay dnf zypper)"
+    echo "  -s <package_manager>    Skip updating the specified package manager (omposh apt pacstall snap flatpak deb-get pipx pacman yay dnf zypper)"
     echo "  -l, --logs              Display last updateall log"
     echo "  -v, --version           Show script version"
     echo "  -h, --help              Show this usage information"
@@ -137,7 +137,7 @@ log_line() {
 # Function to update oh-my-posh
 updateomp() {
     # Set function variables
-    currentVersion=$(oh-my-posh --version)
+    currentVersion=$(oh-my-posh version)
     errorOutput=$(mktemp)
     originLoc="https://ohmyposh.dev/install.sh"
     destFile="$HOME/.local/bin"
@@ -161,7 +161,7 @@ updateomp() {
 
     # Error handling with output to user
     if [[ $? -eq 0 ]]; then
-        newVersion="$(oh-my-posh --version)"
+        newVersion="$(oh-my-posh version)"
         if [[ "$currentVersion" == "$newVersion" ]]; then
             echo -e "Oh My Posh \e[1;38;5;10m${currentVersion}\033[0m is already up to date.${message}"
             log "Version checked; ${currentVersion} is current version."
@@ -192,7 +192,7 @@ updateomp() {
 log "Updateall started"
 
 # Array of package managers
-pkgmgr=('omposh' 'apt' 'snap' 'flatpak' 'deb-get' 'pipx' 'pacman' 'zypper' 'dnf' 'yay')
+pkgmgr=('omposh' 'apt' 'pacstall' 'snap' 'flatpak' 'deb-get' 'pipx' 'pacman' 'zypper' 'dnf' 'yay')
 
 # Function to check if a package manager is installed
 check_package_manager() {
@@ -227,8 +227,14 @@ log "Checking for presence of package manager: ${item_formatted}."
                 "apt")
                     log "Running ${item_formatted} package manager update."
                     log "OUTPUT:"
-                    sudo apt-get update && sudo apt-get upgrade 2>&1 | tee -a "$log_file"
-                    log "Update for ${item_formatted} package manager complete."
+                    os_name=$(cat /etc/os-release | grep "^NAME=" | cut -d= -f2- | tr -d '"')
+                    if [[ "$os_name" = "KDE neon" ]]; then
+                        log "KDE Neon detected, running full-upgrade per neon recommendations for upgrade."
+                        sudo apt update && sudo apt full-upgrade 2>&1 | tee -a "$log_file"
+                    else
+                        sudo apt-get update && sudo apt-get upgrade 2>&1 | tee -a "$log_file"
+                        log "Update for ${item_formatted} package manager complete."
+                    fi
                     ;;
                 "snap")
                     log "Running ${item_formatted} package manager update."
@@ -285,6 +291,12 @@ log "Checking for presence of package manager: ${item_formatted}."
                     yay -Syu 2>&1 | tee -a "$log_file"
                     log "Update for ${item_formatted} package manager complete."
                     ;;
+                "pacstall")
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    pacstall -U && pacstall -Up 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                    ;;
                "omposh")
                     log "Running ${item_formatted} update."
                     log "OUTPUT:"
@@ -300,13 +312,13 @@ log "Checking for presence of package manager: ${item_formatted}."
         if [ $? -eq 0 ]; then
             if containsElement "$item" "${skips[@]}"; then
                 echo -e "${YELLOW}●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages skipped per user input"
-                result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${YELLOW}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "user-skip")
+                result_msg=$(printf "${BLUE}%-9s${RESET} %-20s ${YELLOW}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "user-skip")
             else
                 echo -e "${GREEN} ●${RESET} $(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully"
                 if command -v notify-send >/dev/null 2>&1; then
                     notify-send --app-name="Package Update Results" --icon=emblem-success "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages updated successfully" 2>/dev/null
                 fi
-                result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
+                result_msg=$(printf "${BLUE}%-9s${RESET} %-20s ${GREEN}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "succeeded")
             fi
             log "$result_msg"
         else
@@ -314,7 +326,7 @@ log "Checking for presence of package manager: ${item_formatted}."
             if command -v notify-send >/dev/null 2>&1; then
                 notify-send --app-name="Package Update Results" --icon=emblem-unreadable "$(echo ${item} | tr '[:lower:]' '[:upper:]') packages failed to update" 2>/dev/null
             fi
-            result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${RED}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "failed")
+            result_msg=$(printf "${BLUE}%-9s${RESET} %-20s ${RED}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "failed")
             log "$result_msg"
         fi
             results+=("$result_msg")
@@ -323,7 +335,7 @@ log "Checking for presence of package manager: ${item_formatted}."
         skippedpackage=$(echo ${item} | tr '[:lower:]' '[:upper:]')
         printf "${YELLOW}%-9s${RESET} ${RED}%-8s${RESET} %s\n" "Skipping: " "${skippedpackage}" " is not installed."
         log "Skipping ${item} package manager update; ${item} not installed."
-        result_msg=$(printf "${BLUE}%-8s${RESET} %-20s ${YELLOW}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "skipped")
+        result_msg=$(printf "${BLUE}%-9s${RESET} %-20s ${YELLOW}%-10s${RESET}\n" "$(echo " ${item}" | tr '[:lower:]' '[:upper:]')" "package update status:" "skipped")
     fi
 
 done
@@ -362,12 +374,12 @@ echo
 
 # Print summary results
 log_space
-echo "┌──────────────────────────────────────────┐" | tee -a "$log_file"
-echo "│          Package Update Summary          │" | tee -a "$log_file"
-echo "├──────────────────────────────────────────┤" | tee -a "$log_file"
+echo "┌───────────────────────────────────────────┐" | tee -a "$log_file"
+echo "│          Package Update: Summary          │" | tee -a "$log_file"
+echo "├───────────────────────────────────────────┤" | tee -a "$log_file"
 for result in "${results[@]}"; do
 echo "│$result│" | tee -a "$log_file"
 done
-echo "└──────────────────────────────────────────┘" | tee -a "$log_file"
+echo "└───────────────────────────────────────────┘" | tee -a "$log_file"
 
 log "Updateall complete"
