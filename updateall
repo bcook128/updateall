@@ -230,7 +230,7 @@ log "Checking for presence of package manager: ${item_formatted}."
                     os_name=$(cat /etc/os-release | grep "^NAME=" | cut -d= -f2- | tr -d '"')
                     if [[ "$os_name" = "KDE neon" ]]; then
                         log "KDE Neon detected, running full-upgrade per neon recommendations for upgrade."
-                        sudo apt update && sudo apt full-upgrade 2>&1 | tee -a "$log_file"
+                        sudo apt-get update && sudo apt-get full-upgrade 2>&1 | tee -a "$log_file"
                     else
                         sudo apt-get update && sudo apt-get upgrade 2>&1 | tee -a "$log_file"
                         log "Update for ${item_formatted} package manager complete."
