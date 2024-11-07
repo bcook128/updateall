@@ -21,7 +21,7 @@ updateall [-s <package_manager>] [--version] [--help]
 
 ### Options
 
-* -s <package_manager>: Skip running updates for the specified package manager. Supported package managers include apt, snap, flatpak, deb-get, pipx, pacman, yay, dnf, and zypper. It also updates oh-my-posh.
+* -s <package_manager>: Skip running updates for the specified package manager. Supported package managers include apt, pacstall, snap, flatpak, deb-get, pipx, pacman, yay, dnf, and zypper. It also updates oh-my-posh.
 * -v, --version: Display the version of the updateall script.
 * -h, --help: Display usage information about the updateall script.
 
@@ -34,6 +34,8 @@ updateall [-s <package_manager>] [--version] [--help]
 updateall 1.8
 
 ## History
+
+Version 1.9: Updated to run updates for pacstall and KDE Neon specific apt updates.
 
 Version 1.8: Added option to view most recent updateall log file.
 
