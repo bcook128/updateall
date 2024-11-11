@@ -31,9 +31,11 @@ updateall [-s <package_manager>] [--version] [--help]
 
 ## Version
 
-updateall 1.8
+updateall 2.0
 
 ## History
+
+Version 2.0: Added support for homebrew (brew), nix package manager, and rust (cargo).
 
 Version 1.9: Updated to run updates for pacstall and KDE Neon specific apt updates.
 
