@@ -1,7 +1,14 @@
 #!/bin/bash
 
+# Color codes for terminal output
+RED='\033[1;38;5;1m'
+GREEN='\033[1;38;5;2m'
+YELLOW='\033[1;38;5;3m'
+BLUE='\033[1;38;5;4m'
+RESET='\033[0m'
+
 # Define script version
-SCRIPT_VERSION="1.9"
+SCRIPT_VERSION="2.0"
 
 # Declare logfile variables
 log_dir="$HOME/log/updateall"
@@ -30,9 +37,9 @@ containsElement() {
 
 # Function to show script show_usage
 show_usage() {
-    echo "Usage: $(basename $0) [-s <package-manager>] [-v|--version] [-h|--help]"
-    echo "Options:"
-    echo "  -s <package_manager>    Skip updating the specified package manager (omposh apt pacstall snap flatpak deb-get pipx pacman yay dnf zypper)"
+    echo -e "${GREEN}Usage:${BLUE} $(basename $0)${RESET} [-s <package-manager>] [-v|--version] [-h|--help]"
+    echo -e "${YELLOW}Options:${RESET}"
+    echo "  -s <package_manager>    Skip updating the specified package manager (omposh apt pacstall snap flatpak deb-get pipx pacman yay dnf zypper brew nix cargo)"
     echo "  -l, --logs              Display last updateall log"
     echo "  -v, --version           Show script version"
     echo "  -h, --help              Show this usage information"
@@ -110,13 +117,6 @@ if [ ! -d "$log_dir" ]; then
     mkdir -p "$log_dir"
 fi
 
-# Color codes for terminal output
-RED='\033[1;38;5;1m'
-GREEN='\033[1;38;5;2m'
-YELLOW='\033[1;38;5;3m'
-BLUE='\033[1;38;5;4m'
-RESET='\033[0m'
-
 # Define log function
 log() {
     echo -e "${YELLOW}$(date +"%Y-%m-%d %H:%M:%S")${RESET} $1" >> "$log_file"
@@ -192,7 +192,7 @@ updateomp() {
 log "Updateall started"
 
 # Array of package managers
-pkgmgr=('omposh' 'apt' 'pacstall' 'snap' 'flatpak' 'deb-get' 'pipx' 'pacman' 'zypper' 'dnf' 'yay')
+pkgmgr=('omposh' 'apt' 'snap' 'flatpak' 'deb-get' 'pacman' 'zypper' 'dnf' 'pacstall' 'yay' 'brew' 'nix' 'cargo' 'pipx')
 
 # Function to check if a package manager is installed
 check_package_manager() {
@@ -295,6 +295,30 @@ log "Checking for presence of package manager: ${item_formatted}."
                     log "Running ${item_formatted} package manager update."
                     log "OUTPUT:"
                     pacstall -U && pacstall -Up 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                    ;;
+                "brew")
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    brew update && brew upgrade 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                    ;;
+                "nix")
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    nix-channel --update && nix-env -u 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                    ;;
+                "cargo")
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    rustup update && cargo update 2>&1 | tee -a "$log_file"
+                    log "Update for ${item_formatted} package manager complete."
+                    ;;
+                "npm")
+                    log "Running ${item_formatted} package manager update."
+                    log "OUTPUT:"
+                    npm install -g npm && npm update -g 2>&1 | tee -a "$log_file"
                     log "Update for ${item_formatted} package manager complete."
                     ;;
                "omposh")
