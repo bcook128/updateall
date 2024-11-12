@@ -66,7 +66,7 @@ Run updates/upgrades for all installed package managers:
 updateall
 ```
 
-Run update all and skip flatpak and pipx:
+Update all packages but skip flatpak and pipx:
 
 ```bash
 updateall -s flatpak -s pipx
