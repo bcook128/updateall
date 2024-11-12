@@ -124,14 +124,12 @@ log() {
 
 # Define spacing function for formatting in logfile
 log_space() {
-    for i in {1..3}; do
-        echo "" >> "$log_file"
-    done
+    echo "────────────────────────────────────────────────────────────────────────────────────" >> "$log_file"
 }
 
 # Define spacing function for formatting in logfile
 log_line() {
-    echo "" >> "$log_file"
+    echo "····················································································" >> "$log_file"
 }
 
 # Function to update oh-my-posh
@@ -397,7 +395,7 @@ echo "Summary results below:"
 echo
 
 # Print summary results
-log_space
+echo "" >> "$log_file"
 echo "┌───────────────────────────────────────────┐" | tee -a "$log_file"
 echo "│          Package Update: Summary          │" | tee -a "$log_file"
 echo "├───────────────────────────────────────────┤" | tee -a "$log_file"
