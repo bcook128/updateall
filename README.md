@@ -1,6 +1,7 @@
 <p align="center">
-  <img src="https://github.com/bcook128/updateall/blob/master/updateall01.webp">
+  <img src="https://github.com/bcook128/updateall/blob/master/updateall01.webp" alt="Updateall" width="500">
 </p>
+
 # Updateall
 
 ## Description
