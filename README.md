@@ -33,6 +33,8 @@ updateall [-s <package_manager>] [--version] [--help]
 ## Files
 
 * $HOME/log/updateall: directory where updateall stores log files
+* /usr/share/bin/updateall: location of updateall script
+* /usr/share/man/man1/updateall.1.gz: location of updateall manpages
 
 ## Version
 
