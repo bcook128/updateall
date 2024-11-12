@@ -25,7 +25,7 @@ updateall [-s <package_manager>] [--version] [--help]
 
 ### Options
 
-* ```-s <package_manager>```: Skip running updates for the specified package manager. Supported package managers include apt, pacstall, snap, flatpak, deb-get, pipx, pacman, yay, dnf, and zypper. It also updates oh-my-posh.
+* ```-s <package_manager>```: Skip running updates for the specified package manager. Supported package managers include apt, pacstall, snap, flatpak, deb-get, pipx, pacman, yay, dnf, brew, cargo, and zypper. It also updates oh-my-posh.
 * ```-v, --version```: Display the version of the updateall script.
 * ```-h, --help```: Display usage information about the updateall script.
 
