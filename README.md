@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/bcook128/updateall/blob/master/updateall01.webp" alt="Updateall" width="250">
+  <img src="https://github.com/bcook128/updateall/blob/master/updateall03.png" alt="Updateall" width="250">
 </p>
 
 # Updateall
